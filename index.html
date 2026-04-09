@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VITA - AI Life Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080B10;
+  --bg2:       #0D1117;
+  --panel:     #0F1520;
+  --border:    #1C2840;
+  --border2:   #243050;
+  --cyan:      #00D4FF;
+  --cyan-dim:  rgba(0,212,255,0.12);
+  --cyan-glow: rgba(0,212,255,0.35);
+  --amber:     #FFB830;
+  --amber-dim: rgba(255,184,48,0.12);
+  --red:       #FF4858;
+  --red-dim:   rgba(255,72,88,0.12);
+  --green:     #00E5A0;
+  --green-dim: rgba(0,229,160,0.10);
+  --text:      #C8D8F0;
+  --muted:     #4A5878;
+  --muted2:    #2A3550;
+  --white:     #EEF4FF;
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'Syne Mono', monospace;
+  --font-body:    'DM Sans', sans-serif;
+  --r: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 40% at 0% 0%,    rgba(0,212,255,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 100% 100%, rgba(255,184,48,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 100% 0%,   rgba(0,229,160,0.04) 0%, transparent 60%);
+}
+
+.app {
+  position: relative; z-index: 1;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 14px 96px;
+  min-height: 100vh;
+}
+
+/* ── Auth Screen ── */
+#auth-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+#auth-screen.hidden { display: none; }
+.auth-box {
+  width: 100%; max-width: 400px;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 36px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.auth-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--cyan);
+}
+.auth-logo {
+  font-family: var(--font-display);
+  font-size: 2rem; font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.auth-logo span { color: var(--cyan); }
+.auth-tagline {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.auth-tabs {
+  display: flex; gap: 0;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+.auth-tab {
+  flex: 1; padding: 9px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.auth-tab.active { background: var(--cyan-dim); color: var(--cyan); }
+
+.f-group { margin-bottom: 14px; }
+.f-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.f-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  background: var(--bg2);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.f-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan-dim); }
+
+.btn-auth {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--cyan);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 0 14px var(--cyan-glow);
+}
+.btn-auth:hover { background: var(--green); }
+.btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.auth-error {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--red);
+  margin-top: 10px;
+  min-height: 18px;
+  letter-spacing: 0.06em;
+}
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.logo {
+  font-family: var(--font-display);
+  font-size: 1.6rem; font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.logo-accent { color: var(--cyan); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.status-pill {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--cyan);
+  letter-spacing: 0.1em;
+  border: 1px solid var(--cyan-dim);
+  background: var(--cyan-dim);
+  padding: 5px 11px;
+  border-radius: 2px;
+}
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); animation: blink 2s infinite; }
+.logout-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 5px 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Clock ── */
+.clock-block { margin-bottom: 20px; }
+.clock-time {
+  font-family: var(--font-mono);
+  font-size: 3.4rem; font-weight: 400;
+  color: var(--white);
+  letter-spacing: -2px; line-height: 1;
+}
+.clock-date {
+  font-family: var(--font-mono);
+  font-size: 0.65rem; color: var(--muted);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ── Panel ── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  position: relative; overflow: hidden;
+}
+.panel::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--cyan); opacity: 0.5;
+}
+.panel.amber::before { background: var(--amber); }
+.panel.green::before  { background: var(--green); }
+.panel.red::before    { background: var(--red); }
+
+.panel-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem; letter-spacing: 0.18em;
+  color: var(--muted); text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── Energy ── */
+.energy-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+.e-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 4px 10px;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s;
+  font-family: var(--font-display);
+  color: var(--muted);
+  overflow: hidden;
+}
+.e-btn:hover { border-color: var(--cyan); color: var(--text); }
+.e-btn .e-label { display: block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 6px; }
+.e-icon { display: block; width: 18px; height: 18px; margin: 0 auto; border-radius: 50%; border: 2px solid currentColor; position: relative; }
+.e-icon::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: currentColor; opacity: 0; transition: opacity 0.2s; }
+.e-btn.active .e-icon::after { opacity: 1; }
+.e-btn[data-lvl="depleted"].active { border-color: var(--red);   color: var(--red);   background: var(--red-dim); }
+.e-btn[data-lvl="low"].active      { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+.e-btn[data-lvl="medium"].active   { border-color: var(--cyan);  color: var(--cyan);  background: var(--cyan-dim); }
+.e-btn[data-lvl="high"].active     { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.energy-readout {
+  font-family: var(--font-mono);
+  font-size: 0.68rem; color: var(--muted);
+  min-height: 16px; letter-spacing: 0.05em;
+  transition: color 0.3s;
+}
+
+/* ── AI Panel ── */
+.ai-panel {
+  background: #060C14;
+  border: 1px solid var(--cyan-dim);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: none;
+  position: relative; overflow: hidden;
+}
+.ai-panel.visible { display: block; animation: fadeIn 0.4s ease; }
+.ai-panel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--cyan-dim) 0%, transparent 60%); pointer-events: none; }
+.ai-tag { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 9px; display: flex; align-items: center; gap: 7px; }
+.ai-message { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.65; color: var(--text); font-weight: 300; position: relative; z-index: 1; }
+
+/* ── Progress ── */
+.progress-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+}
+.progress-bar-wrap { flex: 1; }
+.progress-label-row { display: flex; justify-content: space-between; margin-bottom: 7px; }
+.progress-title { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; color: var(--white); text-transform: uppercase; }
+.progress-pct  { font-family: var(--font-mono); font-size: 0.7rem; color: var(--cyan); }
+.bar-track { width: 100%; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+.bar-fill  { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); border-radius: 2px; transition: width 0.6s ease; box-shadow: 0 0 8px var(--cyan-glow); }
+.progress-sub { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); margin-top: 5px; letter-spacing: 0.04em; }
+
+/* ── Tasks ── */
+.section-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 18px; }
+.section-title { font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.add-btn { width: 28px; height: 28px; border: 1px solid var(--border2); border-radius: 3px; background: transparent; color: var(--cyan); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: var(--font-mono); }
+.add-btn:hover { background: var(--cyan-dim); border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow); }
+
+.task-list { display: flex; flex-direction: column; gap: 8px; }
+.task-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: all 0.2s;
+  animation: fadeIn 0.3s ease;
+}
+.task-item:hover { border-color: var(--border2); transform: translateX(3px); }
+.task-item.done { opacity: 0.3; }
+.task-item.done .task-name { text-decoration: line-through; }
+
+.task-energy-bar { width: 3px; height: 34px; border-radius: 2px; flex-shrink: 0; }
+.bar-high   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+.bar-medium { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.bar-low    { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.task-main { flex: 1; min-width: 0; }
+.task-name { font-family: var(--font-display); font-size: 0.86rem; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-meta { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; margin-top: 3px; display: flex; gap: 10px; }
+
+.task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.task-check {
+  width: 22px; height: 22px; border: 1px solid var(--border2); border-radius: 3px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.68rem; color: transparent;
+  transition: all 0.2s;
+}
+.task-check:hover { border-color: var(--cyan); color: var(--cyan); }
+.task-item.done .task-check { background: var(--green); border-color: var(--green); color: var(--bg); }
+.task-del {
+  width: 22px; height: 22px; border: 1px solid transparent; border-radius: 3px;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted2);
+  transition: all 0.2s;
+}
+.task-del:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+.empty-state {
+  text-align: center; padding: 36px 20px;
+  font-family: var(--font-mono); font-size: 0.72rem;
+  color: var(--muted2); letter-spacing: 0.08em;
+  border: 1px dashed var(--border); border-radius: var(--r);
+  line-height: 1.8;
+}
+
+/* ── Reminders ── */
+.reminder-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 12px; }
+.reminder-strip::-webkit-scrollbar { display: none; }
+.r-chip {
+  flex-shrink: 0; padding: 7px 14px;
+  border: 1px solid var(--border2); border-radius: 2px;
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+  transition: all 0.2s; background: transparent;
+}
+.r-chip:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+.r-chip.done  { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(4,7,12,0.88);
+  backdrop-filter: blur(6px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px 8px 0 0;
+  padding: 26px 22px 48px;
+  width: 100%; max-width: 540px;
+  animation: slideUp 0.3s ease;
+}
+.modal-title { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); margin-bottom: 20px; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.form-input, .form-textarea { width: 100%; padding: 10px 13px; border: 1px solid var(--border2); border-radius: var(--r); background: var(--panel); color: var(--white); font-family: var(--font-body); font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+.form-input:focus, .form-textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan-dim); }
+.form-textarea { resize: none; height: 68px; }
+
+.energy-selector { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.es-btn { padding: 9px; border: 1px solid var(--border2); border-radius: var(--r); background: transparent; cursor: pointer; font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); transition: all 0.2s; }
+.es-btn:hover { color: var(--text); border-color: var(--border); }
+.es-btn[data-e="high"].sel   { border-color: var(--red);   color: var(--red);   background: var(--red-dim); }
+.es-btn[data-e="medium"].sel { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+.es-btn[data-e="low"].sel    { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.chip { padding: 5px 11px; border: 1px solid var(--border2); border-radius: 2px; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: all 0.2s; background: transparent; }
+.chip:hover { color: var(--text); border-color: var(--cyan); }
+.chip.sel { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn-cancel { flex: 1; padding: 12px; border: 1px solid var(--border2); border-radius: var(--r); background: transparent; color: var(--muted); font-family: var(--font-display); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.btn-cancel:hover { border-color: var(--red); color: var(--red); }
+.btn-primary { flex: 2; padding: 12px; border: none; border-radius: var(--r); background: var(--cyan); color: var(--bg); font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 14px var(--cyan-glow); }
+.btn-primary:hover { background: var(--green); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Chat ── */
+.chat-wrap { display: flex; flex-direction: column; height: calc(100vh - 190px); }
+.chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 0 14px; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+.msg { max-width: 88%; padding: 12px 15px; border-radius: var(--r); font-size: 0.87rem; line-height: 1.58; animation: fadeIn 0.3s ease; }
+.msg.user { background: var(--cyan); color: var(--bg); align-self: flex-end; border-radius: var(--r) var(--r) 2px var(--r); font-weight: 500; }
+.msg.ai { background: var(--panel); border: 1px solid var(--border); align-self: flex-start; border-radius: var(--r) var(--r) var(--r) 2px; font-weight: 300; color: var(--text); }
+.msg.typing { color: var(--muted); font-style: italic; }
+.chat-input-row { display: flex; gap: 8px; background: var(--panel); border: 1px solid var(--border2); border-radius: var(--r); padding: 6px 6px 6px 15px; }
+.chat-input { flex: 1; border: none; background: transparent; font-family: var(--font-body); font-size: 0.88rem; color: var(--white); outline: none; }
+.chat-input::placeholder { color: var(--muted); }
+.chat-send { background: var(--cyan); color: var(--bg); border: none; border-radius: 4px; width: 36px; height: 36px; cursor: pointer; font-family: var(--font-mono); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; }
+.chat-send:hover { background: var(--green); }
+
+/* ── Wellbeing ── */
+.wb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.wb-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 15px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.wb-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.wb-card::before { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--cyan); opacity: 0.4; }
+.wb-card.amber::before { background: var(--amber); }
+.wb-card.green::before { background: var(--green); }
+.wb-card.red::before   { background: var(--red); }
+.wb-label { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+.wb-value { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 3px; }
+.wb-status { font-family: var(--font-mono); font-size: 0.6rem; color: var(--cyan); letter-spacing: 0.06em; }
+.wb-card.amber .wb-status { color: var(--amber); }
+.wb-card.green .wb-status { color: var(--green); }
+.water-track { display: flex; gap: 3px; margin-top: 9px; }
+.w-seg { flex: 1; height: 4px; border-radius: 2px; background: var(--border2); cursor: pointer; transition: background 0.2s; }
+.w-seg.filled { background: var(--cyan); box-shadow: 0 0 6px var(--cyan-glow); }
+
+.wb-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.wb-btn { flex: 1; padding: 10px; border: 1px solid var(--border2); border-radius: var(--r); background: transparent; color: var(--cyan); font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; min-width: 80px; }
+.wb-btn:hover { background: var(--cyan-dim); border-color: var(--cyan); }
+.wb-btn.amber { color: var(--amber); }
+.wb-btn.amber:hover { background: var(--amber-dim); border-color: var(--amber); }
+.wb-btn.muted { color: var(--muted); }
+.wb-btn.muted:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 540px;
+  background: rgba(8,11,16,0.96);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; padding: 10px 12px 28px; gap: 6px;
+  z-index: 100;
+}
+.nav-btn { flex: 1; background: transparent; border: 1px solid transparent; border-radius: var(--r); padding: 10px 4px; cursor: pointer; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s; }
+.nav-btn:hover { color: var(--text); border-color: var(--border2); }
+.nav-btn.active { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+.nav-icon-txt { font-family: var(--font-mono); font-size: 0.9rem; }
+
+/* ── Views ── */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 10px 20px;
+  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--cyan); z-index: 1000;
+  animation: fadeIn 0.2s ease;
+  white-space: nowrap;
+}
+.toast.error { border-color: var(--red); color: var(--red); }
+.toast.success { border-color: var(--green); color: var(--green); }
+
+/* ── Animations ── */
+@keyframes fadeIn  { from{opacity:0}          to{opacity:1} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes shimmer { 0%,100%{opacity:0.5} 50%{opacity:1} }
+.shimmer { animation: shimmer 1.4s ease-in-out infinite; }
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ── Auth Screen ── -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">VI<span>T</span>A</div>
+    <div class="auth-tagline">Energy-first life operating system</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuth('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuth('register')">Register</button>
+    </div>
+    <div id="auth-name-group" class="f-group" style="display:none">
+      <label class="f-label">Name</label>
+      <input class="f-input" id="auth-name" placeholder="Your name" type="text">
+    </div>
+    <div class="f-group">
+      <label class="f-label">Email</label>
+      <input class="f-input" id="auth-email" placeholder="you@example.com" type="email">
+    </div>
+    <div class="f-group">
+      <label class="f-label">Password</label>
+      <input class="f-input" id="auth-password" placeholder="Min 6 characters" type="password" onkeydown="if(event.key==='Enter')submitAuth()">
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="btn-auth" id="auth-submit" onclick="submitAuth()">Access System</button>
+  </div>
+</div>
+
+<!-- ── Main App ── -->
+<div class="app" id="main-app" style="display:none">
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div class="header">
+      <div class="logo">VI<span class="logo-accent">T</span>A</div>
+      <div class="header-right">
+        <div class="status-pill"><div class="status-dot"></div> ONLINE</div>
+        <button class="logout-btn" onclick="logout()">Exit</button>
+      </div>
+    </div>
+
+    <div class="clock-block">
+      <div class="clock-time" id="clock">--:--:--</div>
+      <div class="clock-date" id="date-display">-- --- ----</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Energy Status</div>
+      <div class="energy-grid">
+        <button class="e-btn" data-lvl="depleted" onclick="setEnergy(this,'depleted')">
+          <span class="e-icon"></span><span class="e-label">Depleted</span>
+        </button>
+        <button class="e-btn" data-lvl="low" onclick="setEnergy(this,'low')">
+          <span class="e-icon"></span><span class="e-label">Low</span>
+        </button>
+        <button class="e-btn" data-lvl="medium" onclick="setEnergy(this,'medium')">
+          <span class="e-icon"></span><span class="e-label">Steady</span>
+        </button>
+        <button class="e-btn" data-lvl="high" onclick="setEnergy(this,'high')">
+          <span class="e-icon"></span><span class="e-label">Peak</span>
+        </button>
+      </div>
+      <div class="energy-readout" id="energy-readout">// Select your current energy level</div>
+    </div>
+
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-tag"><div class="status-dot"></div> VITA Analysis</div>
+      <div class="ai-message" id="ai-message"></div>
+    </div>
+
+    <div class="panel-label" style="margin-bottom:8px;">Body Protocols</div>
+    <div class="reminder-strip" id="reminder-strip"></div>
+
+    <div class="progress-row">
+      <div class="progress-bar-wrap">
+        <div class="progress-label-row">
+          <div class="progress-title" id="progress-title">Task Queue</div>
+          <div class="progress-pct" id="progress-pct">0%</div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+        <div class="progress-sub" id="progress-sub">// Add tasks — sorted by energy, not deadline</div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-title">Daily Queue</div>
+      <button class="add-btn" onclick="openModal()">+</button>
+    </div>
+    <div class="task-list" id="task-list">
+      <div class="empty-state">// NO TASKS LOADED<br>Press [+] to add your first task</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="view" id="view-chat">
+    <div class="header">
+      <div class="logo">VITA <span class="logo-accent">CHAT</span></div>
+      <div class="status-pill"><div class="status-dot"></div> AI READY</div>
+    </div>
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg ai">VITA online. I am your energy-aware life assistant. Tell me what is on your mind — tasks, priorities, or how you are feeling. I will help you plan around your actual capacity, not arbitrary deadlines.</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="Ask VITA anything..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">&#x2191;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WELLBEING -->
+  <div class="view" id="view-well">
+    <div class="header">
+      <div class="logo">BODY <span class="logo-accent">DATA</span></div>
+      <div class="status-pill"><div class="status-dot"></div> MONITORING</div>
+    </div>
+
+    <div class="wb-grid">
+      <div class="wb-card">
+        <div class="wb-label">Hydration</div>
+        <div class="wb-value" id="water-val">0/8</div>
+        <div class="water-track" id="water-track"></div>
+        <div class="wb-status" id="water-status">Log intake below</div>
+      </div>
+      <div class="wb-card amber">
+        <div class="wb-label">Last Meal</div>
+        <div class="wb-value" id="meal-val">--</div>
+        <div class="wb-status" id="meal-status">Not logged</div>
+      </div>
+      <div class="wb-card green">
+        <div class="wb-label">Movement</div>
+        <div class="wb-value" id="move-val">0m</div>
+        <div class="wb-status" id="move-status">No activity yet</div>
+      </div>
+      <div class="wb-card red">
+        <div class="wb-label">Rest Logged</div>
+        <div class="wb-value" id="rest-val">0m</div>
+        <div class="wb-status" id="rest-status">No rest yet</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:12px;">
+      <div class="panel-label">Log Activity</div>
+      <div class="wb-btn-row">
+        <button class="wb-btn" onclick="logWellbeing('add_water',1)">+ Water</button>
+        <button class="wb-btn amber" onclick="logWellbeing('log_meal',true)">Log Meal</button>
+        <button class="wb-btn green" onclick="logWellbeing('add_move',5)">+ Move 5m</button>
+        <button class="wb-btn" onclick="logWellbeing('add_rest',10)">+ Rest 10m</button>
+        <button class="wb-btn muted" onclick="logWellbeing('water',0)">Reset Water</button>
+      </div>
+    </div>
+
+    <div class="ai-panel visible">
+      <div class="ai-tag"><div class="status-dot"></div> VITA Wellness</div>
+      <div class="ai-message" id="well-tip">Loading wellness protocol...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="nav-btn active" id="nav-home" onclick="switchView('home')">
+    <span class="nav-icon-txt">[ ]</span>Home
+  </button>
+  <button class="nav-btn" id="nav-chat" onclick="switchView('chat')">
+    <span class="nav-icon-txt">&lt;/&gt;</span>Ask VITA
+  </button>
+  <button class="nav-btn" id="nav-well" onclick="switchView('well')">
+    <span class="nav-icon-txt">+</span>Wellbeing
+  </button>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">New Task</div>
+    <div class="form-group">
+      <label class="form-label">Task Name</label>
+      <input class="form-input" id="task-name-input" placeholder="Describe the task...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Energy Required</label>
+      <div class="energy-selector">
+        <button class="es-btn" data-e="high"   onclick="selectTaskEnergy('high')">High</button>
+        <button class="es-btn sel" data-e="medium" onclick="selectTaskEnergy('medium')">Medium</button>
+        <button class="es-btn" data-e="low"    onclick="selectTaskEnergy('low')">Low</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="chip-row" id="chip-row">
+        <div class="chip sel" onclick="selectChip(this)">Work</div>
+        <div class="chip" onclick="selectChip(this)">Personal</div>
+        <div class="chip" onclick="selectChip(this)">Creative</div>
+        <div class="chip" onclick="selectChip(this)">Admin</div>
+        <div class="chip" onclick="selectChip(this)">Health</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <textarea class="form-textarea" id="task-notes" placeholder="Context for VITA..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="add-task-btn" onclick="addTask()">Add to Queue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────────────
+   CONFIG
+──────────────────────────────────────────── */
+const API = "/api";
+
+/* ────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────── */
+const S = {
+  token:         localStorage.getItem("vita_token") || null,
+  energy:        null,
+  tasks:         [],
+  wellbeing:     { water: 0, move_min: 0, rest_min: 0, last_meal: null },
+  taskEnergy:    "medium",
+  authMode:      "login",
+  wellLoaded:    false,
+};
+
+/* ────────────────────────────────────────────
+   API HELPERS
+──────────────────────────────────────────── */
+async function api(path, method = "GET", body = null) {
+  const opts = {
+    method,
+    headers: { "Content-Type": "application/json" },
+  };
+  if (S.token) opts.headers["Authorization"] = "Bearer " + S.token;
+  if (body)    opts.body = JSON.stringify(body);
+  const res  = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ────────────────────────────────────────────
+   TOAST
+──────────────────────────────────────────── */
+function toast(msg, type = "") {
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+/* ────────────────────────────────────────────
+   AUTH
+──────────────────────────────────────────── */
+function switchAuth(mode) {
+  S.authMode = mode;
+  document.querySelectorAll(".auth-tab").forEach((t, i) => {
+    t.classList.toggle("active", (i === 0 && mode === "login") || (i === 1 && mode === "register"));
+  });
+  document.getElementById("auth-name-group").style.display = mode === "register" ? "block" : "none";
+  document.getElementById("auth-error").textContent = "";
+  document.getElementById("auth-submit").textContent = mode === "login" ? "Access System" : "Create Account";
+}
+
+async function submitAuth() {
+  const email    = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value.trim();
+  const errEl    = document.getElementById("auth-error");
+  const btn      = document.getElementById("auth-submit");
+
+  errEl.textContent = "";
+  if (!email || !password) { errEl.textContent = "Email and password required"; return; }
+
+  btn.disabled = true;
+  btn.textContent = "Connecting...";
+
+  try {
+    let data;
+    if (S.authMode === "login") {
+      data = await api("/auth/login", "POST", { email, password });
+    } else {
+      const name = document.getElementById("auth-name").value.trim();
+      if (!name) { errEl.textContent = "Name required"; btn.disabled = false; btn.textContent = "Create Account"; return; }
+      data = await api("/auth/register", "POST", { name, email, password });
+    }
+    S.token = data.token;
+    localStorage.setItem("vita_token", data.token);
+    bootApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = S.authMode === "login" ? "Access System" : "Create Account";
+  }
+}
+
+function logout() {
+  S.token = null;
+  localStorage.removeItem("vita_token");
+  location.reload();
+}
+
+/* ────────────────────────────────────────────
+   BOOT
+──────────────────────────────────────────── */
+async function bootApp() {
+  document.getElementById("auth-screen").classList.add("hidden");
+  document.getElementById("main-app").style.display  = "block";
+  document.getElementById("bottom-nav").style.display = "flex";
+  startClock();
+  buildReminders();
+  await loadTasks();
+  await loadWellbeing();
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (S.token) { bootApp(); } else { switchAuth("login"); }
+});
+
+/* ────────────────────────────────────────────
+   CLOCK
+──────────────────────────────────────────── */
+function startClock() {
+  const tick = () => {
+    const n  = new Date();
+    const hh = n.getHours().toString().padStart(2,"0");
+    const mm = n.getMinutes().toString().padStart(2,"0");
+    const ss = n.getSeconds().toString().padStart(2,"0");
+    document.getElementById("clock").textContent = `${hh}:${mm}:${ss}`;
+    const days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    document.getElementById("date-display").textContent =
+      `${days[n.getDay()]}  //  ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ────────────────────────────────────────────
+   NAV
+──────────────────────────────────────────── */
+function switchView(v) {
+  document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+  document.getElementById("view-" + v).classList.add("active");
+  document.getElementById("nav-" + v).classList.add("active");
+  if (v === "well" && !S.wellLoaded) loadWellnessTip();
+}
+
+/* ────────────────────────────────────────────
+   ENERGY
+──────────────────────────────────────────── */
+async function setEnergy(btn, level) {
+  S.energy = level;
+  document.querySelectorAll(".e-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("energy-readout").textContent = `// Energy logged: ${level.toUpperCase()}`;
+
+  const panel  = document.getElementById("ai-panel");
+  const msgEl  = document.getElementById("ai-message");
+  panel.classList.add("visible");
+  msgEl.innerHTML = '<span class="shimmer">Analysing energy signature...</span>';
+
+  try {
+    const data = await api("/energy", "POST", { level });
+    msgEl.textContent = data.insight;
+    renderTasks();
+  } catch (e) {
+    msgEl.textContent = "Energy logged. Use this state to guide your task sequence.";
+  }
+}
+
+/* ────────────────────────────────────────────
+   TASKS
+──────────────────────────────────────────── */
+const ENERGY_RANK = { depleted: 0, low: 1, medium: 2, high: 3 };
+
+async function loadTasks() {
+  try {
+    const tasks = await api("/tasks");
+    S.tasks = tasks;
+    renderTasks();
+  } catch (e) {
+    toast("Could not load tasks", "error");
+  }
+}
+
+function renderTasks() {
+  const list = document.getElementById("task-list");
+  if (!S.tasks.length) {
+    list.innerHTML = '<div class="empty-state">// NO TASKS LOADED<br>Press [+] to add your first task</div>';
+    updateProgress();
+    return;
+  }
+
+  const userRank = ENERGY_RANK[S.energy] ?? 2;
+  const sorted = [...S.tasks].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (S.energy) {
+      const da = Math.abs((ENERGY_RANK[a.energy] ?? 2) - userRank);
+      const db = Math.abs((ENERGY_RANK[b.energy] ?? 2) - userRank);
+      return da - db;
+    }
+    return 0;
+  });
+
+  list.innerHTML = "";
+  sorted.forEach(task => {
+    const div = document.createElement("div");
+    div.className = "task-item" + (task.done ? " done" : "");
+    const barCls = { high: "bar-high", medium: "bar-medium", low: "bar-low" }[task.energy] || "bar-medium";
+    div.innerHTML = `
+      <div class="task-energy-bar ${barCls}"></div>
+      <div class="task-main">
+        <div class="task-name">${escHtml(task.name)}</div>
+        <div class="task-meta"><span>${task.energy.toUpperCase()} ENERGY</span><span>${escHtml(task.category)}</span></div>
+      </div>
+      <div class="task-actions">
+        <button class="task-check" onclick="toggleTask('${task.id}')" title="Toggle done">${task.done ? "X" : ""}</button>
+        <button class="task-del"   onclick="deleteTask('${task.id}')" title="Delete">x</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = S.tasks.length;
+  const done  = S.tasks.filter(t => t.done).length;
+  const pct   = total ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById("bar-fill").style.width    = pct + "%";
+  document.getElementById("progress-pct").textContent = pct + "%";
+
+  if (!total) {
+    document.getElementById("progress-title").textContent = "Task Queue";
+    document.getElementById("progress-sub").textContent   = "// Add tasks — sorted by energy, not deadline";
+  } else if (done === total) {
+    document.getElementById("progress-title").textContent = "All Complete";
+    document.getElementById("progress-sub").textContent   = "// Queue cleared. Rest is the next priority.";
+  } else {
+    document.getElementById("progress-title").textContent = `${done} / ${total} Complete`;
+    document.getElementById("progress-sub").textContent = S.energy
+      ? `// Sorted by ${S.energy.toUpperCase()} energy match`
+      : "// Set energy level for intelligent sorting";
+  }
+}
+
+async function toggleTask(id) {
+  try {
+    const data = await api(`/tasks/${id}/toggle`, "POST");
+    const idx  = S.tasks.findIndex(t => t.id === id);
+    if (idx !== -1) S.tasks[idx] = data.task;
+    renderTasks();
+  } catch (e) { toast("Failed to update task", "error"); }
+}
+
+async function deleteTask(id) {
+  try {
+    await api(`/tasks/${id}`, "DELETE");
+    S.tasks = S.tasks.filter(t => t.id !== id);
+    renderTasks();
+    toast("Task removed", "");
+  } catch (e) { toast("Failed to delete task", "error"); }
+}
+
+/* ── Modal ── */
+let _taskEnergy = "medium";
+
+function openModal() {
+  document.getElementById("modal-overlay").classList.add("open");
+  document.getElementById("task-name-input").focus();
+}
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  document.getElementById("task-name-input").value = "";
+  document.getElementById("task-notes").value      = "";
+}
+
+function selectTaskEnergy(lvl) {
+  _taskEnergy = lvl;
+  document.querySelectorAll(".es-btn").forEach(b => b.classList.remove("sel"));
+  document.querySelector(`.es-btn[data-e="${lvl}"]`).classList.add("sel");
+}
+
+function selectChip(el) {
+  document.querySelectorAll("#chip-row .chip").forEach(c => c.classList.remove("sel"));
+  el.classList.add("sel");
+}
+
+async function addTask() {
+  const name = document.getElementById("task-name-input").value.trim();
+  if (!name) {
+    document.getElementById("task-name-input").style.borderColor = "var(--red)";
+    setTimeout(() => document.getElementById("task-name-input").style.borderColor = "", 1200);
+    return;
+  }
+  const chip     = document.querySelector("#chip-row .chip.sel");
+  const category = chip ? chip.textContent.trim() : "Work";
+  const notes    = document.getElementById("task-notes").value.trim();
+
+  const btn = document.getElementById("add-task-btn");
+  btn.disabled = true;
+
+  try {
+    const data = await api("/tasks", "POST", { name, energy: _taskEnergy, category, notes });
+    S.tasks.unshift(data.task);
+    closeModal();
+    renderTasks();
+    toast("Task added", "success");
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ────────────────────────────────────────────
+   REMINDERS
+──────────────────────────────────────────── */
+const REMINDERS = [
+  { id: "water",   label: "Drink Water"   },
+  { id: "eat",     label: "Eat Something" },
+  { id: "move",    label: "Move 5 Min"    },
+  { id: "breathe", label: "Breathe"       },
+  { id: "eyes",    label: "20-20-20 Eyes" },
+  { id: "posture", label: "Check Posture" },
+];
+const _snoozed = new Set();
+
+function buildReminders() {
+  const strip = document.getElementById("reminder-strip");
+  strip.innerHTML = "";
+  REMINDERS.forEach(r => {
+    const chip = document.createElement("div");
+    chip.className = "r-chip";
+    chip.textContent = r.label;
+    chip.onclick = () => {
+      if (_snoozed.has(r.id)) return;
+      chip.classList.add("done");
+      chip.textContent = r.label + " [DONE]";
+      _snoozed.add(r.id);
+      setTimeout(() => {
+        chip.classList.remove("done");
+        chip.textContent = r.label;
+        _snoozed.delete(r.id);
+      }, 60000);
+    };
+    strip.appendChild(chip);
+  });
+}
+
+/* ────────────────────────────────────────────
+   CHAT
+──────────────────────────────────────────── */
+async function sendChat() {
+  const inputEl = document.getElementById("chat-input");
+  const text    = inputEl.value.trim();
+  if (!text) return;
+  inputEl.value = "";
+
+  appendMsg(text, "user");
+  const typingEl = appendMsg("Processing...", "ai typing");
+
+  try {
+    const data = await api("/chat", "POST", { message: text });
+    typingEl.textContent = data.response;
+    typingEl.classList.remove("typing");
+  } catch (e) {
+    typingEl.textContent = "Connection error. Please try again.";
+    typingEl.classList.remove("typing");
+  }
+
+  const chatDiv = document.getElementById("chat-messages");
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+
+function appendMsg(text, cls) {
+  const chatDiv = document.getElementById("chat-messages");
+  const el      = document.createElement("div");
+  el.className  = "msg " + cls;
+  el.textContent = text;
+  chatDiv.appendChild(el);
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+  return el;
+}
+
+/* ────────────────────────────────────────────
+   WELLBEING
+──────────────────────────────────────────── */
+async function loadWellbeing() {
+  try {
+    const data = await api("/wellbeing");
+    S.wellbeing = data;
+    renderWellbeing();
+  } catch (_) {}
+}
+
+function renderWellbeing() {
+  const w = S.wellbeing;
+  document.getElementById("water-val").textContent   = `${w.water}/8`;
+  document.getElementById("water-status").textContent = w.water >= 8 ? "Target reached" : w.water >= 4 ? "Halfway there" : "Keep going";
+  document.getElementById("move-val").textContent    = `${w.move_min}m`;
+  document.getElementById("move-status").textContent = w.move_min >= 30 ? "Goal reached" : "+5 min per tap";
+  document.getElementById("rest-val").textContent    = `${w.rest_min}m`;
+  document.getElementById("rest-status").textContent = w.rest_min > 0 ? `${w.rest_min} min logged` : "No rest yet";
+
+  if (w.last_meal) {
+    const t = new Date(w.last_meal);
+    document.getElementById("meal-val").textContent    = t.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
+    document.getElementById("meal-status").textContent = "Logged";
+  }
+
+  // Water track
+  const track = document.getElementById("water-track");
+  track.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const seg = document.createElement("div");
+    seg.className = "w-seg" + (i < w.water ? " filled" : "");
+    seg.onclick   = () => logWellbeing("water", i + 1);
+    track.appendChild(seg);
+  }
+}
+
+async function logWellbeing(field, value) {
+  try {
+    const data = await api("/wellbeing", "PATCH", { [field]: value });
+    S.wellbeing = data.data;
+    renderWellbeing();
+  } catch (e) { toast(e.message, "error"); }
+}
+
+async function loadWellnessTip() {
+  S.wellLoaded = true;
+  const tipEl = document.getElementById("well-tip");
+  try {
+    const data = await api("/wellbeing/tip");
+    tipEl.textContent = data.tip;
+  } catch (_) {
+    tipEl.textContent = "Drink water before caffeine. A five-minute walk resets cognitive load better than any screen break.";
+  }
+}
+</script>
+</body>
+</html>
